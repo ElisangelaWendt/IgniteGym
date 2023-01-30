@@ -1,6 +1,6 @@
 import { Loading } from '@components/Loading';
 import {useFonts, Roboto_400Regular, Roboto_700Bold} from '@expo-google-fonts/roboto'
-import Signin from '@screens/Signin';
+import { Routes } from '@routes/index';
 import { NativeBaseProvider } from 'native-base';
 import { StatusBar } from 'react-native';
 import { THEME } from './src/theme';
@@ -15,7 +15,7 @@ export default function App() {
     backgroundColor="transparent"
     translucent
     />
-    {fontsLoaded ? <Signin/> : <Loading/>}
+    {fontsLoaded ? <Routes/> : <Loading/>}
     </NativeBaseProvider>
   );
 }
