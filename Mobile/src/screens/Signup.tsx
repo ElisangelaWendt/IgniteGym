@@ -6,8 +6,7 @@ import Input from "@components/Input";
 import { Button } from "@components/Button";
 import { useNavigation } from "@react-navigation/native";
 import { useState } from "react";
-import { useForm } from "react-hook-form/dist/useForm";
-import { Controller } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import * as yup from 'yup'
 import { yupResolver } from '@hookform/resolvers/yup'
 
@@ -37,8 +36,16 @@ export default function Signup() {
     navigation.goBack()
   }
 
-  function handleSignUp(data: FormDataProps) {
-
+  async function handleSignUp({name, email,password}: FormDataProps) {
+    await fetch('http://192.168.254.3:3333/users',{
+      method:'POST',
+      headers:{
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({name,email,password})
+    }).then(response => response.json())
+    .then(data => console.log(data))
   }
 
   return (
