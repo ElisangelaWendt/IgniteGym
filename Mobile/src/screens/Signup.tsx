@@ -1,14 +1,17 @@
-import { Center, Heading, Image, ScrollView, Text, VStack } from "native-base";
+import { Center, Heading, Image, ScrollView, Text, useToast, VStack } from "native-base";
 
 import LogoSvg from '@assets/logo.svg'
 import BackgroundImg from '@assets/background.png'
 import Input from "@components/Input";
 import { Button } from "@components/Button";
 import { useNavigation } from "@react-navigation/native";
-import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import * as yup from 'yup'
 import { yupResolver } from '@hookform/resolvers/yup'
+import { api } from "@services/api";
+import { AppError } from "@utils/AppError";
+import { useState } from "react";
+import { useAuth } from "@hooks/useAuth";
 
 type FormDataProps = {
   name: string;
@@ -16,6 +19,7 @@ type FormDataProps = {
   password: string;
   passwordConfirm: string;
 }
+
 
 //usado para validar o formulário
 const signUpSchema = yup.object({
@@ -26,6 +30,10 @@ const signUpSchema = yup.object({
 })
 
 export default function Signup() {
+  const [isLoading, setIsLoading] = useState(false)
+  const toast = useToast()
+  const {SignIn} = useAuth()
+
   const { control, handleSubmit, formState: { errors } } = useForm<FormDataProps>({
     resolver: yupResolver(signUpSchema)
   })
@@ -36,16 +44,33 @@ export default function Signup() {
     navigation.goBack()
   }
 
-  async function handleSignUp({name, email,password}: FormDataProps) {
-    await fetch('http://192.168.254.3:3333/users',{
-      method:'POST',
-      headers:{
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({name,email,password})
-    }).then(response => response.json())
-    .then(data => console.log(data))
+  async function handleSignUp({ name, email, password }: FormDataProps) {
+    try {
+      setIsLoading(true)
+      await api.post('/users', { name, email, password })
+      await SignIn(email,password)
+    } catch (error) {
+      setIsLoading(false)
+      const isAppError = error instanceof AppError
+      const title = isAppError ? error.message : 'Não foi possível criar conta. Tente novamente mais tarde'
+
+      toast.show({
+        title,
+        placement: 'top',
+        bgColor: 'red.500'
+      })
+    }
+
+    //feito com o fetch
+    // await fetch('http://192.168.254.3:3333/users',{
+    //   method:'POST',
+    //   headers:{
+    //     'Accept': 'application/json',
+    //     'Content-Type': 'application/json'
+    //   },
+    //   body: JSON.stringify({name,email,password})
+    // }).then(response => response.json())
+    // .then(data => console.log(data))
   }
 
   return (
@@ -121,7 +146,7 @@ export default function Signup() {
               />
             )}
           />
-          <Button title="Criar e acessar" onPress={handleSubmit(handleSignUp)} />
+          <Button title="Criar e acessar" onPress={handleSubmit(handleSignUp)} isLoading={isLoading}/>
         </Center>
 
         <Button mt={12} title="Voltar para o login" variant="outline" onPress={handleGoBack} />
