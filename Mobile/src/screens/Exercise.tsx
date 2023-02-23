@@ -11,12 +11,15 @@ import { AppError } from "@utils/AppError";
 import { api } from "@services/api";
 import { useEffect, useState } from "react";
 import { ExerciseDTO } from "@dtos/ExerciseDTO";
+import { Loading } from "@components/Loading";
 
 type RouteParams = {
   exerciseId: string
 }
 
 export function Exercise() {
+  const [isLoading, setIsLoading] = useState(true)
+  const [sendingRegister, setSendingRegister] = useState(false)
   const navigation = useNavigation<AppNavigatorRoutesProps>()
   const route = useRoute()
   const toast = useToast()
@@ -30,6 +33,7 @@ export function Exercise() {
 
   async function fetchExerciseDetails() {
     try {
+      setIsLoading(true)
       const response = await api.get(`/exercises/${exerciseId}`)
       setExercise(response.data)
     } catch (error) {
@@ -40,6 +44,34 @@ export function Exercise() {
         placement: 'top',
         bgColor: 'red.500'
       })
+    }finally{
+      setIsLoading(false)
+    }
+  }
+
+  async function handleExerciseHistoryRegister(){
+    try{
+      setSendingRegister(true)
+
+      await api.post('/history', { exercise_id: exerciseId})
+
+      toast.show({
+        title: "Parabéns, exercicio registrado no seu histórico",
+        placement: 'top',
+        bgColor: 'green.700'
+      })
+
+      navigation.navigate('History')
+    } catch (error) {
+      const isAppError = error instanceof AppError
+      const title = isAppError ? error.message : "Não foi possível registrar o exercicio"
+      toast.show({
+        title,
+        placement: 'top',
+        bgColor: 'red.500'
+      })
+    }finally{
+      setSendingRegister(false)
     }
   }
 
@@ -65,6 +97,7 @@ export function Exercise() {
           </HStack>
         </HStack>
       </VStack>
+      {isLoading ? <Loading/> :
       <ScrollView>
         <VStack p={8}>
           <Box rounded="lg" mb={3} overflow="hidden">
@@ -90,10 +123,14 @@ export function Exercise() {
             </HStack>
             <Button
               title="Marcar como realizado"
+              isLoading={sendingRegister}
+              onPress={handleExerciseHistoryRegister}
             />
           </Box>
         </VStack>
       </ScrollView>
+      }
+    
     </VStack>
   )
 }
